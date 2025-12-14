@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOC Alert Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            padding: 40px;
+        }
+        h2 {
+            text-align: center;
+        }
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background: #1f2933;
+            color: white;
+        }
+        .HIGH { color: red; font-weight: bold; }
+        .MEDIUM { color: orange; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<h2>🚨 SOC Alert Detection Dashboard</h2>
+
+<table>
+    <tr>
+        <th>IP Address</th>
+        <th>User</th>
+        <th>Attempts</th>
+        <th>Severity</th>
+        <th>Action</th>
+    </tr>
+
+    {% for a in alerts %}
+    <tr>
+        <td>{{ a[0] }}</td>
+        <td>{{ a[1] }}</td>
+        <td>{{ a[2] }}</td>
+        <td class="{{ a[3] }}">{{ a[3] }}</td>
+        <td>{{ a[4] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

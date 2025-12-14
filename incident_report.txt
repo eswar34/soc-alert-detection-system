@@ -1,0 +1,15 @@
+SOC INCIDENT REPORT
+===================
+
+IP Address: 192.168.1.10
+Username: admin
+Attempts: 4
+Severity: MEDIUM
+Action Taken: MONITOR
+---------------------------
+IP Address: 10.0.0.5
+Username: user1
+Attempts: 3
+Severity: MEDIUM
+Action Taken: MONITOR
+---------------------------

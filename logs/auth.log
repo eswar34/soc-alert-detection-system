@@ -1,0 +1,10 @@
+Jan 10 01:10 Failed password for admin from 192.168.1.10
+Jan 10 01:11 Failed password for admin from 192.168.1.10
+Jan 10 01:12 Failed password for admin from 192.168.1.10
+Jan 10 01:13 Failed password for admin from 192.168.1.10
+
+Jan 10 02:01 Failed password for user1 from 10.0.0.5
+Jan 10 02:02 Failed password for user1 from 10.0.0.5
+Jan 10 02:03 Failed password for user1 from 10.0.0.5
+
+Jan 10 10:30 Accepted password for user2 from 192.168.1.20

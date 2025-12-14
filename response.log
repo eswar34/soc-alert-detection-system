@@ -1,0 +1,28 @@
+----------------------------------
+Time: Sun Dec 14 16:33:51 IST 2025
+IP: 
+Action Taken: 
+Monitoring IP 
+Result: No blocking performed
+----------------------------------
+----------------------------------
+Time: Sun Dec 14 16:34:30 IST 2025
+IP: 192.168.1.10
+Action Taken: BLOCK IP
+Simulating IP block for 192.168.1.10
+Result: IP 192.168.1.10 blocked (simulation)
+----------------------------------
+----------------------------------
+Time: Sun Dec 14 16:34:41 IST 2025
+IP: 192.168.1.10
+Action Taken: 
+Monitoring IP 192.168.1.10
+Result: No blocking performed
+----------------------------------
+----------------------------------
+Time: Sun Dec 14 16:35:16 IST 2025
+IP: 192.168.1.10
+Action Taken: BLOCK IP
+Simulating IP block for 192.168.1.10
+Result: IP 192.168.1.10 blocked (simulation)
+----------------------------------
