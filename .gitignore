@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+soc_alerts.db
+response.log
+incident_report.txt
+.env
