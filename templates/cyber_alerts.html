@@ -1,0 +1,3167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 CYBER SOC - SOCAlert Detection and Incident Analysis System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Cyber Style -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Cyber Theme Base */
+        :root {
+            --cyber-bg: #0a0a0a;
+            --cyber-bg-secondary: #1a1a1a;
+            --cyber-bg-tertiary: #2a2a2a;
+            --cyber-accent: #00ff41;
+            --cyber-accent-secondary: #00ffff;
+            --cyber-accent-tertiary: #ffaa00;
+            --cyber-danger: #ff073a;
+            --cyber-warning: #ffaa00;
+            --cyber-success: #00ff41;
+            --cyber-info: #00ffff;
+            --cyber-text: #ffffff;
+            --cyber-text-secondary: #cccccc;
+            --cyber-text-muted: #888888;
+            --cyber-border: #333333;
+            --cyber-border-light: #555555;
+            --cyber-glow: 0 0 10px rgba(0, 255, 65, 0.3);
+            --cyber-glow-danger: 0 0 10px rgba(255, 7, 58, 0.3);
+            --cyber-glow-warning: 0 0 10px rgba(255, 170, 0, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--cyber-bg);
+            color: var(--cyber-text);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* Enhanced Matrix Rain Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 65, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 7, 58, 0.03) 0%, transparent 50%);
+            animation: matrixRain 25s linear infinite;
+            z-index: -2;
+            opacity: 0.3;
+        }
+
+        @keyframes matrixRain {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        /* Sidebar Navigation */
+        .cyber-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(10, 10, 10, 0.95);
+            border-right: 1px solid var(--cyber-accent);
+            z-index: 1000;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--cyber-border);
+            text-align: center;
+        }
+
+        .sidebar-logo {
+            font-size: 1.8rem;
+            color: var(--cyber-accent);
+            text-shadow: 0 0 10px var(--cyber-accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-subtitle {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: var(--cyber-text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--cyber-accent);
+            background: rgba(0, 255, 65, 0.1);
+            border-left-color: var(--cyber-accent);
+            text-shadow: 0 0 5px var(--cyber-accent);
+        }
+
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .cyber-header {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            border-bottom: 1px solid var(--cyber-accent);
+            padding: 1rem 2rem;
+            position: relative;
+        }
+
+        .cyber-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--cyber-accent);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cyber-title {
+            color: var(--cyber-accent);
+            font-weight: 700;
+            text-shadow: 0 0 10px var(--cyber-accent);
+            font-size: 1.5rem;
+            margin: 0;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-panel {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(26, 26, 26, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        .status-online { background: var(--cyber-success); }
+        .status-warning { background: var(--cyber-warning); }
+        .status-critical { background: var(--cyber-danger); }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cyber Panel Styling */
+        .cyber-panel {
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid var(--cyber-border);
+            border-radius: 12px;
+            box-shadow: var(--cyber-glow);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 65, 0.2);
+        }
+
+        .cyber-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--cyber-accent), var(--cyber-accent-secondary), var(--cyber-danger));
+            animation: scanLine 4s linear infinite;
+        }
+
+        @keyframes scanLine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--cyber-border);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .panel-title {
+            color: var(--cyber-accent);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .panel-subtitle {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .panel-body {
+            padding: 1.5rem;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: rgba(26, 26, 26, 0.9);
+            border: 1px solid var(--cyber-border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 65, 0.05), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .stat-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--cyber-glow);
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--cyber-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+
+        .stat-description {
+            font-size: 0.75rem;
+            color: var(--cyber-text-muted);
+        }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid var(--cyber-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Terminal Style Elements */
+        .terminal-window {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--cyber-accent);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            height: 100%;
+        }
+
+        .terminal-header {
+            background: var(--cyber-bg-secondary);
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--cyber-accent);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .terminal-dot.red { background: var(--cyber-danger); }
+        .terminal-dot.yellow { background: var(--cyber-warning); }
+        .terminal-dot.green { background: var(--cyber-accent); }
+
+        .terminal-title {
+            color: var(--cyber-text-secondary);
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        /* Alert Table */
+        .alerts-table {
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--cyber-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .alerts-table thead th {
+            background: var(--cyber-bg-secondary);
+            border-bottom: 1px solid var(--cyber-accent);
+            color: var(--cyber-accent);
+            padding: 1rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .alerts-table tbody tr {
+            border-bottom: 1px solid var(--cyber-border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .alerts-table tbody tr:hover {
+            background: rgba(0, 255, 65, 0.05);
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.1);
+        }
+
+        .alert-high {
+            background: rgba(255, 7, 58, 0.1);
+            border-left: 4px solid var(--cyber-danger);
+        }
+
+        .alert-medium {
+            background: rgba(255, 170, 0, 0.1);
+            border-left: 4px solid var(--cyber-warning);
+        }
+
+        .alert-low {
+            background: rgba(0, 255, 65, 0.1);
+            border-left: 4px solid var(--cyber-accent);
+        }
+
+        .alert-critical {
+            background: rgba(255, 7, 58, 0.2);
+            border-left: 4px solid var(--cyber-danger);
+            animation: criticalPulse 1s infinite;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Buttons */
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--cyber-accent);
+            color: var(--cyber-accent);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .cyber-btn:hover {
+            background: var(--cyber-accent);
+            color: var(--cyber-bg);
+            box-shadow: var(--cyber-glow);
+            transform: translateY(-1px);
+        }
+
+        .cyber-btn-danger {
+            border-color: var(--cyber-danger);
+            color: var(--cyber-danger);
+        }
+
+        .cyber-btn-danger:hover {
+            background: var(--cyber-danger);
+            color: white;
+            box-shadow: var(--cyber-glow-danger);
+        }
+
+        .cyber-btn-warning {
+            border-color: var(--cyber-warning);
+            color: var(--cyber-warning);
+        }
+
+        .cyber-btn-warning:hover {
+            background: var(--cyber-warning);
+            color: var(--cyber-bg);
+            box-shadow: var(--cyber-glow-warning);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: rgba(26, 26, 26, 0.95);
+            border: 1px solid var(--cyber-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-panel .form-control {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--cyber-border);
+            color: var(--cyber-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .control-panel .form-control:focus {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+            color: var(--cyber-text);
+        }
+
+        .control-panel .form-control::placeholder {
+            color: var(--cyber-text-muted);
+        }
+
+        .control-panel .form-select {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--cyber-border);
+            color: var(--cyber-text);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        .control-label {
+            color: var(--cyber-text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        /* System Health */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .health-item {
+            background: rgba(26, 26, 26, 0.8);
+            border: 1px solid var(--cyber-border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .health-label {
+            font-size: 0.8rem;
+            color: var(--cyber-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .health-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--cyber-border);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1rem;
+            padding-left: 1rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--cyber-accent);
+        }
+
+        .timeline-time {
+            font-size: 0.75rem;
+            color: var(--cyber-text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-content {
+            font-size: 0.8rem;
+            color: var(--cyber-text-secondary);
+        }
+
+        /* Notifications */
+        .cyber-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid var(--cyber-accent);
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: var(--cyber-glow);
+            z-index: 9999;
+            min-width: 300px;
+            animation: slideIn 0.5s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Modal Enhancements */
+        .modal-content {
+            background: var(--cyber-bg-secondary);
+            border: 1px solid var(--cyber-accent);
+            border-radius: 12px;
+            color: var(--cyber-text);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--cyber-border);
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            color: var(--cyber-accent);
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--cyber-border);
+            padding: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .cyber-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .cyber-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .sidebar-toggle {
+                display: block !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .cyber-title { font-size: 1.2rem; }
+            .stat-number { font-size: 2rem; }
+            .chart-container { height: 250px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .header-content { flex-direction: column; gap: 1rem; }
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--cyber-border);
+            border-radius: 50%;
+            border-top-color: var(--cyber-accent);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Utility Classes */
+        .text-cyber { color: var(--cyber-accent); }
+        .text-danger { color: var(--cyber-danger); }
+        .text-warning { color: var(--cyber-warning); }
+        .text-success { color: var(--cyber-success); }
+        .text-info { color: var(--cyber-info); }
+        .bg-cyber { background: var(--cyber-accent); }
+        .border-cyber { border-color: var(--cyber-accent); }
+
+        /* Hide scrollbar but keep functionality */
+        .cyber-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cyber-sidebar::-webkit-scrollbar-track {
+            background: var(--cyber-bg);
+        }
+
+        .cyber-sidebar::-webkit-scrollbar-thumb {
+            background: var(--cyber-accent);
+            border-radius: 3px;
+        }
+
+        .cyber-sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--cyber-accent-secondary);
+        }
+
+        /* Threat Intelligence Feed */
+        .threat-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .threat-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+            background: rgba(26, 26, 26, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .threat-item:hover {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .threat-high {
+            border-left: 4px solid var(--cyber-danger);
+        }
+
+        .threat-medium {
+            border-left: 4px solid var(--cyber-warning);
+        }
+
+        .threat-low {
+            border-left: 4px solid var(--cyber-info);
+        }
+
+        .threat-icon {
+            font-size: 1.5rem;
+            margin-right: 1rem;
+            width: 40px;
+            text-align: center;
+        }
+
+        .threat-high .threat-icon { color: var(--cyber-danger); }
+        .threat-medium .threat-icon { color: var(--cyber-warning); }
+        .threat-low .threat-icon { color: var(--cyber-info); }
+
+        .threat-title {
+            font-weight: 600;
+            color: var(--cyber-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .threat-desc {
+            color: var(--cyber-text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .threat-meta {
+            color: var(--cyber-text-muted);
+            font-size: 0.75rem;
+        }
+
+        /* Response Times Metrics */
+        .response-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .trend-up { color: var(--cyber-danger); }
+        .trend-down { color: var(--cyber-success); }
+
+        /* Incident Management */
+        .incident-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .incident-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+            background: rgba(26, 26, 26, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .incident-item:hover {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .incident-critical {
+            border-left: 4px solid var(--cyber-danger);
+        }
+
+        .incident-high {
+            border-left: 4px solid var(--cyber-warning);
+        }
+
+        .incident-medium {
+            border-left: 4px solid var(--cyber-info);
+        }
+
+        .incident-status {
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .incident-critical .incident-status { color: var(--cyber-danger); }
+        .incident-high .incident-status { color: var(--cyber-warning); }
+        .incident-medium .incident-status { color: var(--cyber-info); }
+
+        .incident-title {
+            font-weight: 600;
+            color: var(--cyber-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .incident-meta {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .incident-assignee {
+            color: var(--cyber-text-muted);
+            font-size: 0.75rem;
+        }
+
+        .incident-actions {
+            margin-left: auto;
+        }
+
+        /* Statistics Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* System Monitoring */
+        .resource-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .resource-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .resource-label {
+            min-width: 120px;
+            color: var(--cyber-text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .cyber-progress {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .cyber-progress .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .resource-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Network Status */
+        .network-status {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .network-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 6px;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .network-name {
+            color: var(--cyber-text);
+            font-weight: 500;
+        }
+
+        .network-status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-good { color: var(--cyber-success); }
+        .status-warning { color: var(--cyber-warning); }
+        .status-error { color: var(--cyber-danger); }
+
+        /* Service Grid */
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .service-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 8px;
+            border: 1px solid var(--cyber-border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .service-item:hover {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .service-item i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-active i { color: var(--cyber-success); }
+        .service-warning i { color: var(--cyber-warning); }
+        .service-error i { color: var(--cyber-danger); }
+
+        .service-name {
+            color: var(--cyber-text);
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .service-status {
+            color: var(--cyber-text-secondary);
+            font-size: 0.75rem;
+        }
+
+        .service-active .service-status { color: var(--cyber-success); }
+        .service-warning .service-status { color: var(--cyber-warning); }
+        .service-error .service-status { color: var(--cyber-danger); }
+
+        /* Settings */
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 6px;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .setting-label {
+            color: var(--cyber-text);
+            font-weight: 500;
+        }
+
+        .cyber-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .cyber-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.2);
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--cyber-text);
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: var(--cyber-accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background: var(--cyber-bg);
+        }
+
+        /* Threshold Settings */
+        .threshold-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .threshold-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .threshold-label {
+            color: var(--cyber-text-secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .threshold-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cyber-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .cyber-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--cyber-accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: var(--cyber-glow);
+        }
+
+        .cyber-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: var(--cyber-accent);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: var(--cyber-glow);
+        }
+
+        .threshold-value {
+            color: var(--cyber-accent);
+            font-weight: 600;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* Theme Options */
+        .theme-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .theme-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(26, 26, 26, 0.8);
+            border-radius: 8px;
+            border: 2px solid var(--cyber-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-option:hover, .theme-option.active {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .theme-preview {
+            width: 60px;
+            height: 40px;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--cyber-border);
+        }
+
+        .cyber-theme {
+            background: linear-gradient(135deg, #0a0a0a 0%, #00ff41 100%);
+        }
+
+        .dark-theme {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+        }
+
+        .neon-theme {
+            background: linear-gradient(135deg, #000000 0%, #ff073a 100%);
+        }
+
+        .minimal-theme {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+        }
+
+        .theme-name {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* Log File Management */
+        .log-upload-area {
+            width: 100%;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--cyber-border);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(26, 26, 26, 0.5);
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--cyber-accent);
+            background: rgba(0, 255, 65, 0.1);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--cyber-text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--cyber-text);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: var(--cyber-text-muted);
+            font-size: 0.85rem;
+        }
+
+        .upload-progress {
+            margin-top: 1rem;
+        }
+
+        .progress-text {
+            color: var(--cyber-text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        /* Logs List */
+        .logs-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--cyber-border);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background: rgba(26, 26, 26, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .log-item:hover {
+            border-color: var(--cyber-accent);
+            box-shadow: var(--cyber-glow);
+        }
+
+        .log-info {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .log-icon {
+            color: var(--cyber-accent);
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .log-details {
+            flex: 1;
+        }
+
+        .log-name {
+            color: var(--cyber-text);
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .log-meta {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .log-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Analysis Results */
+        .analysis-results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .analysis-placeholder {
+            text-align: center;
+            padding: 2rem;
+            color: var(--cyber-text-secondary);
+        }
+
+        .analysis-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .analysis-item {
+            padding: 1rem;
+            border: 1px solid var(--cyber-border);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background: rgba(26, 26, 26, 0.8);
+        }
+
+        .analysis-title {
+            color: var(--cyber-text);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .analysis-value {
+            color: var(--cyber-accent);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .analysis-critical { color: var(--cyber-danger); }
+        .analysis-warning { color: var(--cyber-warning); }
+        .analysis-good { color: var(--cyber-success); }
+
+        /* Security Score */
+        .security-score-container, .health-score-container {
+            text-align: center;
+        }
+
+        .security-score-circle, .health-score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--cyber-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+
+        .security-score-value, .health-score-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--cyber-accent);
+        }
+
+        .security-score-label, .health-score-label {
+            font-size: 0.8rem;
+            color: var(--cyber-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .security-indicators, .health-indicators {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: left;
+        }
+
+        .security-indicator, .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--cyber-text-secondary);
+        }
+
+        .indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .indicator-dot.excellent { background: var(--cyber-success); }
+        .indicator-dot.good { background: var(--cyber-info); }
+        .indicator-dot.warning { background: var(--cyber-warning); }
+        .indicator-dot.critical { background: var(--cyber-danger); }
+
+        /* Network Stats */
+        .network-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--cyber-text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            color: var(--cyber-accent);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="cyber-sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">CYBER SOC</div>
+            <div class="sidebar-subtitle">SOC Alert & Incident Analysis</div>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li class="nav-item">
+                <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#alerts" class="nav-link" data-section="alerts">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Alerts
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#analytics" class="nav-link" data-section="analytics">
+                    <i class="fas fa-chart-line"></i>
+                    Analytics
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#incidents" class="nav-link" data-section="incidents">
+                    <i class="fas fa-folder-open"></i>
+                    Incidents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#monitoring" class="nav-link" data-section="monitoring">
+                    <i class="fas fa-server"></i>
+                    System Monitor
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#logs" class="nav-link" data-section="logs">
+                    <i class="fas fa-file-alt"></i>
+                    Log Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#settings" class="nav-link" data-section="settings">
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </a>
+            </li>
+        </ul>
+
+        <div style="padding: 1rem; border-top: 1px solid var(--cyber-border); margin-top: auto;">
+            <div class="text-center">
+                <small class="text-muted">v2.1.0</small>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="cyber-header">
+            <div class="container-fluid">
+                <div class="header-content">
+                    <div>
+                        <h1 class="cyber-title mb-0">SOCAlert Detection and Incident Analysis System</h1>
+                        <small class="text-muted">Real-time SOC Monitoring & Response</small>
+                    </div>
+
+                    <div class="header-actions">
+                        <div class="status-panel">
+                            <div class="status-item">
+                                <span class="status-indicator status-online"></span>
+                                <span>SYSTEM ONLINE</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-indicator status-warning"></span>
+                                <span>{{ stats.total }} ALERTS</span>
+                            </div>
+                        </div>
+
+                        <button class="cyber-btn" onclick="runDetector()" id="scanBtn">
+                            <i class="fas fa-play me-1"></i>SCAN
+                        </button>
+
+                        <button class="cyber-btn" onclick="toggleSidebar()" style="display: none;" class="sidebar-toggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section active">
+                <!-- System Health -->
+                <div class="cyber-panel mb-4">
+                    <div class="panel-header">
+                        <div>
+                            <h3 class="panel-title">System Health Monitor</h3>
+                            <p class="panel-subtitle">Real-time infrastructure status</p>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="health-grid">
+                            <div class="health-item">
+                                <div class="health-label">CPU Usage</div>
+                                <div class="health-value text-cyber">45%</div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: 45%"></div>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-label">Memory</div>
+                                <div class="health-value text-info">67%</div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" style="width: 67%"></div>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-label">Network I/O</div>
+                                <div class="health-value text-warning">23%</div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" style="width: 23%"></div>
+                                </div>
+                            </div>
+                            <div class="health-item">
+                                <div class="health-label">Threat Level</div>
+                                <div class="health-value text-danger">{{ (stats.high / stats.total * 100) if stats.total > 0 else 0 }}%</div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" style="width: {{ (stats.high / stats.total * 100) if stats.total > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="dashboard-grid">
+                    <div class="cyber-panel stat-card">
+                        <div class="stat-number text-cyber">{{ stats.total }}</div>
+                        <div class="stat-label">Total Alerts</div>
+                        <div class="stat-description">Active security events</div>
+                    </div>
+
+                    <div class="cyber-panel stat-card">
+                        <div class="stat-number glitch text-danger">{{ stats.high }}</div>
+                        <div class="stat-label">Critical Threats</div>
+                        <div class="stat-description">Immediate response required</div>
+                    </div>
+
+                    <div class="cyber-panel stat-card">
+                        <div class="stat-number text-warning">{{ stats.medium }}</div>
+                        <div class="stat-label">Warning Alerts</div>
+                        <div class="stat-description">Monitor closely</div>
+                    </div>
+
+                    <div class="cyber-panel stat-card">
+                        <div class="stat-number text-success">{{ stats.low }}</div>
+                        <div class="stat-label">Info Events</div>
+                        <div class="stat-description">Low priority notifications</div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <div>
+                                <h4 class="panel-title">Threat Distribution</h4>
+                                <p class="panel-subtitle">Alert severity breakdown</p>
+                            </div>
+                        </div>
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span class="terminal-dot green"></span>
+                                <span class="terminal-dot yellow"></span>
+                                <span class="terminal-dot red"></span>
+                                <h6 class="terminal-title mb-0">threat_analysis.exe</h6>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="severityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <div>
+                                <h4 class="panel-title">Activity Timeline</h4>
+                                <p class="panel-subtitle">Recent security events</p>
+                            </div>
+                        </div>
+                        <div class="terminal-window">
+                            <div class="terminal-header">
+                                <span class="terminal-dot green"></span>
+                                <span class="terminal-dot yellow"></span>
+                                <span class="terminal-dot red"></span>
+                                <h6 class="terminal-title mb-0">activity_monitor.exe</h6>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="activityChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Timeline -->
+                <div class="cyber-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h4 class="panel-title">Recent Activity</h4>
+                            <p class="panel-subtitle">Latest security events timeline</p>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="timeline">
+                            {% for alert in alerts[:5] %}
+                            <div class="timeline-item">
+                                <div class="timeline-time">{{ alert[5] }}</div>
+                                <div class="timeline-content">
+                                    <strong>{{ alert[3] }} Alert:</strong> Failed login attempt from {{ alert[0] }} for user {{ alert[1] }} ({{ alert[2] }} attempts)
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Section -->
+            <div id="alerts-section" class="content-section">
+                <!-- Control Panel -->
+                <div class="control-panel">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="control-label">Search Alerts</div>
+                            <input type="text" id="searchInput" class="form-control" placeholder="IP, user, or pattern...">
+                        </div>
+                        <div class="col-md-2">
+                            <div class="control-label">Severity</div>
+                            <select id="severityFilter" class="form-select">
+                                <option value="">All Levels</option>
+                                <option value="HIGH">Critical</option>
+                                <option value="MEDIUM">Warning</option>
+                                <option value="LOW">Info</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="control-label">Action</div>
+                            <select id="actionFilter" class="form-select">
+                                <option value="">All Actions</option>
+                                <option value="BLOCK IP">Block IP</option>
+                                <option value="MONITOR">Monitor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="control-label">Time Range</div>
+                            <select id="timeFilter" class="form-select">
+                                <option value="">All Time</option>
+                                <option value="1h">Last Hour</option>
+                                <option value="24h">Last 24 Hours</option>
+                                <option value="7d">Last 7 Days</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="control-label">Actions</div>
+                            <div class="d-flex gap-2">
+                                <button class="cyber-btn flex-fill" onclick="filterAlerts()">
+                                    <i class="fas fa-filter me-1"></i>Filter
+                                </button>
+                                <button class="cyber-btn cyber-btn-danger flex-fill" onclick="clearAlerts()">
+                                    <i class="fas fa-trash me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Table -->
+                <div class="cyber-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h4 class="panel-title">Security Alerts</h4>
+                            <p class="panel-subtitle">{{ alerts|length }} alerts detected • Click row for details</p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="cyber-btn cyber-btn-warning" onclick="exportAlerts()">
+                                <i class="fas fa-download me-1"></i>Export
+                            </button>
+                            <button class="cyber-btn" onclick="refreshAlerts()">
+                                <i class="fas fa-sync me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-dark alerts-table mb-0" id="alertsTable">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                                    <th><i class="fas fa-globe me-1"></i>Source IP</th>
+                                    <th><i class="fas fa-user me-1"></i>Target User</th>
+                                    <th><i class="fas fa-keyboard me-1"></i>Attempts</th>
+                                    <th><i class="fas fa-exclamation-triangle me-1"></i>Severity</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Action</th>
+                                    <th><i class="fas fa-clock me-1"></i>Timestamp</th>
+                                    <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in alerts %}
+                                <tr class="alert-{{ alert[3].lower() }}" onclick="showAlertDetails({{ loop.index }}, '{{ alert[0] }}', '{{ alert[1] }}', {{ alert[2] }}, '{{ alert[3] }}', '{{ alert[4] }}', '{{ alert[5] }}')">
+                                    <td>#{{ loop.index }}</td>
+                                    <td><code class="text-info">{{ alert[0] }}</code></td>
+                                    <td class="text-light">{{ alert[1] }}</td>
+                                    <td><span class="badge bg-secondary">{{ alert[2] }}</span></td>
+                                    <td>
+                                        <span class="badge
+                                            {% if alert[3] == 'HIGH' %}bg-danger
+                                            {% elif alert[3] == 'MEDIUM' %}bg-warning text-dark
+                                            {% else %}bg-success{% endif %}">
+                                            {{ alert[3] }}
+                                        </span>
+                                    </td>
+                                    <td class="text-cyber">{{ alert[4] }}</td>
+                                    <td class="text-muted" style="font-size: 0.75rem;">{{ alert[5] }}</td>
+                                    <td><span class="badge bg-info">Active</span></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analytics-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-shield-alt me-2"></i>Threat Intelligence</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="threat-feed">
+                                <div class="threat-item threat-high">
+                                    <div class="threat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                    <div class="threat-content">
+                                        <div class="threat-title">Malware Campaign Detected</div>
+                                        <div class="threat-desc">Ransomware variant targeting Windows systems</div>
+                                        <div class="threat-meta">Source: ThreatIntel Feed • 2 hours ago</div>
+                                    </div>
+                                </div>
+                                <div class="threat-item threat-medium">
+                                    <div class="threat-icon"><i class="fas fa-user-secret"></i></div>
+                                    <div class="threat-content">
+                                        <div class="threat-title">Credential Stuffing Attack</div>
+                                        <div class="threat-desc">Brute force attempts using leaked credentials</div>
+                                        <div class="threat-meta">Source: Dark Web Monitor • 4 hours ago</div>
+                                    </div>
+                                </div>
+                                <div class="threat-item threat-low">
+                                    <div class="threat-icon"><i class="fas fa-bug"></i></div>
+                                    <div class="threat-content">
+                                        <div class="threat-title">Vulnerability Disclosure</div>
+                                        <div class="threat-desc">New CVE in Apache web server</div>
+                                        <div class="threat-meta">Source: CVE Database • 6 hours ago</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-clock me-2"></i>Response Times</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="response-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-value text-success">2.3s</div>
+                                    <div class="metric-label">Avg Detection Time</div>
+                                    <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> +0.2s</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value text-info">45s</div>
+                                    <div class="metric-label">Avg Response Time</div>
+                                    <div class="metric-trend trend-down"><i class="fas fa-arrow-down"></i> -5s</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value text-warning">12m</div>
+                                    <div class="metric-label">Avg Resolution Time</div>
+                                    <div class="metric-trend trend-down"><i class="fas fa-arrow-down"></i> -2m</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value text-danger">98.5%</div>
+                                    <div class="metric-label">SLA Compliance</div>
+                                    <div class="metric-trend trend-up"><i class="fas fa-arrow-up"></i> +1.2%</div>
+                                </div>
+                            </div>
+                            <div class="chart-container mt-3">
+                                <canvas id="responseChart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incident Management Section -->
+            <div id="incidents-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-fire me-2"></i>Active Incidents</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="incident-list">
+                                <div class="incident-item incident-critical">
+                                    <div class="incident-status">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="incident-content">
+                                        <div class="incident-title">Ransomware Attack - Finance Server</div>
+                                        <div class="incident-meta">INC-2024-001 • Critical • 2h 15m active</div>
+                                        <div class="incident-assignee">Assigned: SOC Team Lead</div>
+                                    </div>
+                                    <div class="incident-actions">
+                                        <button class="btn btn-sm btn-outline-danger">Escalate</button>
+                                    </div>
+                                </div>
+                                <div class="incident-item incident-high">
+                                    <div class="incident-status">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="incident-content">
+                                        <div class="incident-title">Brute Force Attack - Web Portal</div>
+                                        <div class="incident-meta">INC-2024-002 • High • 45m active</div>
+                                        <div class="incident-assignee">Assigned: Security Analyst</div>
+                                    </div>
+                                    <div class="incident-actions">
+                                        <button class="btn btn-sm btn-outline-warning">Investigate</button>
+                                    </div>
+                                </div>
+                                <div class="incident-item incident-medium">
+                                    <div class="incident-status">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="incident-content">
+                                        <div class="incident-title">Suspicious Login Attempts</div>
+                                        <div class="incident-meta">INC-2024-003 • Medium • 15m active</div>
+                                        <div class="incident-assignee">Assigned: Junior Analyst</div>
+                                    </div>
+                                    <div class="incident-actions">
+                                        <button class="btn btn-sm btn-outline-info">Monitor</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-chart-line me-2"></i>Incident Statistics</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number text-danger">3</div>
+                                    <div class="stat-label">Active Incidents</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number text-warning">12</div>
+                                    <div class="stat-label">This Week</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number text-success">98.5%</div>
+                                    <div class="stat-label">Resolution Rate</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number text-info">2.4h</div>
+                                    <div class="stat-label">Avg Resolution</div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <canvas id="incidentChart" height="120"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Monitoring Section -->
+            <div id="monitoring-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-server me-2"></i>System Resources</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="resource-metrics">
+                                <div class="resource-item">
+                                    <div class="resource-label">CPU Usage</div>
+                                    <div class="progress cyber-progress">
+                                        <div class="progress-bar bg-danger" style="width: 67%"></div>
+                                    </div>
+                                    <div class="resource-value">67%</div>
+                                </div>
+                                <div class="resource-item">
+                                    <div class="resource-label">Memory Usage</div>
+                                    <div class="progress cyber-progress">
+                                        <div class="progress-bar bg-warning" style="width: 82%"></div>
+                                    </div>
+                                    <div class="resource-value">82%</div>
+                                </div>
+                                <div class="resource-item">
+                                    <div class="resource-label">Disk Usage</div>
+                                    <div class="progress cyber-progress">
+                                        <div class="progress-bar bg-info" style="width: 45%"></div>
+                                    </div>
+                                    <div class="resource-value">45%</div>
+                                </div>
+                                <div class="resource-item">
+                                    <div class="resource-label">Network I/O</div>
+                                    <div class="progress cyber-progress">
+                                        <div class="progress-bar bg-success" style="width: 23%"></div>
+                                    </div>
+                                    <div class="resource-value">23%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-network-wired me-2"></i>Network Monitoring</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="network-status">
+                                <div class="network-item">
+                                    <div class="network-name">Firewall Status</div>
+                                    <div class="network-status-indicator status-good">
+                                        <i class="fas fa-check-circle"></i> Active
+                                    </div>
+                                </div>
+                                <div class="network-item">
+                                    <div class="network-name">IDS/IPS Status</div>
+                                    <div class="network-status-indicator status-good">
+                                        <i class="fas fa-check-circle"></i> Active
+                                    </div>
+                                </div>
+                                <div class="network-item">
+                                    <div class="network-name">VPN Tunnels</div>
+                                    <div class="network-status-indicator status-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> 2 Down
+                                    </div>
+                                </div>
+                                <div class="network-item">
+                                    <div class="network-name">Load Balancer</div>
+                                    <div class="network-status-indicator status-good">
+                                        <i class="fas fa-check-circle"></i> Healthy
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <canvas id="networkChart" height="120"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-shield-alt me-2"></i>Security Services</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="service-grid">
+                                <div class="service-item service-active">
+                                    <i class="fas fa-antivirus"></i>
+                                    <div class="service-name">Antivirus</div>
+                                    <div class="service-status">Active</div>
+                                </div>
+                                <div class="service-item service-active">
+                                    <i class="fas fa-lock"></i>
+                                    <div class="service-name">EDR</div>
+                                    <div class="service-status">Active</div>
+                                </div>
+                                <div class="service-item service-warning">
+                                    <i class="fas fa-file-shield"></i>
+                                    <div class="service-name">DLP</div>
+                                    <div class="service-status">Warning</div>
+                                </div>
+                                <div class="service-item service-active">
+                                    <i class="fas fa-cloud-shield"></i>
+                                    <div class="service-name">SIEM</div>
+                                    <div class="service-status">Active</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Settings Section -->
+            <div id="settings-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-cogs me-2"></i>Alert Configuration</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="settings-group">
+                                <div class="setting-item">
+                                    <div class="setting-label">Email Notifications</div>
+                                    <div class="setting-control">
+                                        <label class="cyber-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-label">SMS Alerts</div>
+                                    <div class="setting-control">
+                                        <label class="cyber-switch">
+                                            <input type="checkbox">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-label">Slack Integration</div>
+                                    <div class="setting-control">
+                                        <label class="cyber-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-label">Auto-escalation</div>
+                                    <div class="setting-control">
+                                        <label class="cyber-switch">
+                                            <input type="checkbox" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-sliders-h me-2"></i>Threshold Settings</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="threshold-settings">
+                                <div class="threshold-item">
+                                    <div class="threshold-label">CPU Alert Threshold</div>
+                                    <div class="threshold-control">
+                                        <input type="range" min="50" max="100" value="80" class="cyber-slider">
+                                        <span class="threshold-value">80%</span>
+                                    </div>
+                                </div>
+                                <div class="threshold-item">
+                                    <div class="threshold-label">Memory Alert Threshold</div>
+                                    <div class="threshold-control">
+                                        <input type="range" min="50" max="100" value="85" class="cyber-slider">
+                                        <span class="threshold-value">85%</span>
+                                    </div>
+                                </div>
+                                <div class="threshold-item">
+                                    <div class="threshold-label">Failed Login Attempts</div>
+                                    <div class="threshold-control">
+                                        <input type="range" min="3" max="20" value="5" class="cyber-slider">
+                                        <span class="threshold-value">5 attempts</span>
+                                    </div>
+                                </div>
+                                <div class="threshold-item">
+                                    <div class="threshold-label">Response Time Alert</div>
+                                    <div class="threshold-control">
+                                        <input type="range" min="1" max="60" value="30" class="cyber-slider">
+                                        <span class="threshold-value">30 seconds</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-palette me-2"></i>Theme Settings</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="theme-options">
+                                <div class="theme-option active" data-theme="cyber">
+                                    <div class="theme-preview cyber-theme"></div>
+                                    <div class="theme-name">Cyber Matrix</div>
+                                </div>
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview dark-theme"></div>
+                                    <div class="theme-name">Dark Mode</div>
+                                </div>
+                                <div class="theme-option" data-theme="neon">
+                                    <div class="theme-preview neon-theme"></div>
+                                    <div class="theme-name">Neon Glow</div>
+                                </div>
+                                <div class="theme-option" data-theme="minimal">
+                                    <div class="theme-preview minimal-theme"></div>
+                                    <div class="theme-name">Minimal</div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="cyber-btn w-100">
+                                    <i class="fas fa-save me-2"></i>Save Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log File Management Section -->
+            <div id="logs-section" class="content-section">
+                <div class="dashboard-grid">
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-file-alt me-2"></i>Upload Log Files</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="log-upload-area">
+                                <div class="upload-zone" id="uploadZone">
+                                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                    <p class="upload-text">Drag & drop log files here or click to browse</p>
+                                    <p class="upload-subtext">Supported formats: .log, .txt, .csv, .json</p>
+                                    <input type="file" id="logFileInput" accept=".log,.txt,.csv,.json" style="display: none;">
+                                    <button class="cyber-btn" onclick="document.getElementById('logFileInput').click()">
+                                        <i class="fas fa-folder-open me-1"></i>Browse Files
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                                    <div class="progress cyber-progress">
+                                        <div class="progress-bar bg-info" id="progressBar" style="width: 0%"></div>
+                                    </div>
+                                    <div class="progress-text" id="progressText">Uploading...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-list me-2"></i>Uploaded Logs</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="logs-list" id="logsList">
+                                <div class="log-item">
+                                    <div class="log-info">
+                                        <i class="fas fa-file-alt log-icon"></i>
+                                        <div class="log-details">
+                                            <div class="log-name">No logs uploaded yet</div>
+                                            <div class="log-meta">Upload some log files to get started</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="cyber-btn" onclick="refreshLogs()">
+                                    <i class="fas fa-sync-alt me-1"></i>Refresh List
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-search me-2"></i>Log Analysis Results</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="analysis-results" id="analysisResults">
+                                <div class="analysis-placeholder">
+                                    <i class="fas fa-chart-bar analysis-icon"></i>
+                                    <p>Upload and analyze log files to see security insights</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cyber-panel">
+                        <div class="panel-header">
+                            <h4 class="panel-title"><i class="fas fa-shield-alt me-2"></i>Security Score</h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="security-score-container">
+                                <div class="security-score-circle">
+                                    <div class="security-score-value" id="securityScore">--</div>
+                                    <div class="security-score-label">Security Score</div>
+                                </div>
+                                <div class="security-indicators">
+                                    <div class="security-indicator">
+                                        <span class="indicator-dot excellent"></span>
+                                        <span>90-100: Excellent</span>
+                                    </div>
+                                    <div class="security-indicator">
+                                        <span class="indicator-dot good"></span>
+                                        <span>70-89: Good</span>
+                                    </div>
+                                    <div class="security-indicator">
+                                        <span class="indicator-dot warning"></span>
+                                        <span>50-69: Warning</span>
+                                    </div>
+                                    <div class="security-indicator">
+                                        <span class="indicator-dot critical"></span>
+                                        <span>0-49: Critical</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Details Modal -->
+    <div class="modal fade" id="alertModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Alert Details #<span id="alertId"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-cyber">Event Information</h6>
+                            <table class="table table-dark table-sm">
+                                <tr>
+                                    <td>Source IP:</td>
+                                    <td><code id="alertIP" class="text-info"></code></td>
+                                </tr>
+                                <tr>
+                                    <td>Target User:</td>
+                                    <td id="alertUser"></td>
+                                </tr>
+                                <tr>
+                                    <td>Attempts:</td>
+                                    <td id="alertAttempts"></td>
+                                </tr>
+                                <tr>
+                                    <td>Severity:</td>
+                                    <td><span id="alertSeverity" class="badge"></span></td>
+                                </tr>
+                                <tr>
+                                    <td>Timestamp:</td>
+                                    <td id="alertTimestamp"></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-cyber">Response Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="cyber-btn" onclick="blockIP()">
+                                    <i class="fas fa-ban me-1"></i>Block IP Address
+                                </button>
+                                <button class="cyber-btn cyber-btn-warning" onclick="investigateAlert()">
+                                    <i class="fas fa-search me-1"></i>Investigate
+                                </button>
+                                <button class="cyber-btn" onclick="createIncident()">
+                                    <i class="fas fa-folder-plus me-1"></i>Create Incident
+                                </button>
+                                <button class="cyber-btn cyber-btn-danger" onclick="escalateAlert()">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Escalate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="cyber-btn" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="cyber-btn cyber-btn-danger" onclick="dismissAlert()">Dismiss Alert</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Initialize charts with cyber theme
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.borderColor = '#333333';
+
+        const severityData = {
+            labels: ['CRITICAL', 'WARNING', 'INFO'],
+            datasets: [{
+                data: [{{ stats.high }}, {{ stats.medium }}, {{ stats.low }}],
+                backgroundColor: ['#ff073a', '#ffaa00', '#00ff41'],
+                borderColor: ['#ff073a', '#ffaa00', '#00ff41'],
+                borderWidth: 2
+            }]
+        };
+
+        const severityChart = new Chart(document.getElementById('severityChart'), {
+            type: 'doughnut',
+            data: severityData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff',
+                            font: {
+                                family: 'JetBrains Mono',
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Activity chart
+        const activityData = {
+            labels: ['24H', '7D', '30D'],
+            datasets: [{
+                label: 'THREATS DETECTED',
+                data: [{{ stats.total }}, {{ stats.total }}, {{ stats.total }}],
+                backgroundColor: '#00ff41',
+                borderColor: '#00ffff',
+                borderWidth: 2
+            }]
+        };
+
+        const activityChart = new Chart(document.getElementById('activityChart'), {
+            type: 'bar',
+            data: activityData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const section = this.getAttribute('data-section');
+
+                // Update active nav
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show section
+                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(section + '-section').classList.add('active');
+            });
+        });
+
+        // Filter functionality
+        function filterAlerts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const severityFilter = document.getElementById('severityFilter').value;
+            const actionFilter = document.getElementById('actionFilter').value;
+            const timeFilter = document.getElementById('timeFilter').value;
+            const rows = document.querySelectorAll('#alertsTable tbody tr');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const ip = cells[1].textContent.toLowerCase();
+                const user = cells[2].textContent.toLowerCase();
+                const severity = cells[4].textContent.trim();
+                const action = cells[5].textContent.trim();
+
+                const matchesSearch = ip.includes(searchTerm) || user.includes(searchTerm);
+                const matchesSeverity = !severityFilter || severity === severityFilter;
+                const matchesAction = !actionFilter || action === actionFilter;
+
+                row.style.display = matchesSearch && matchesSeverity && matchesAction ? '' : 'none';
+            });
+        }
+
+        // Clear alerts function
+        function clearAlerts() {
+            if (confirm('CONFIRM: Clear all alerts from database? This action cannot be undone.')) {
+                fetch('/clear_alerts', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showNotification('ALERTS CLEARED', 'success');
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            showNotification('CLEAR FAILED', 'danger');
+                        }
+                    });
+            }
+        }
+
+        // Run detector function
+        function runDetector() {
+            const btn = document.getElementById('scanBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading me-1"></span>SCANNING...';
+            btn.disabled = true;
+
+            fetch('/run_detector')
+                .then(response => response.json())
+                .then(data => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+
+                    if (data.success) {
+                        showNotification('SCAN COMPLETE - ' + data.output.split('\n').pop(), 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification('SCAN FAILED: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    showNotification('SCAN ERROR', 'danger');
+                });
+        }
+
+        // Show alert details modal
+        function showAlertDetails(id, ip, user, attempts, severity, action, timestamp) {
+            document.getElementById('alertId').textContent = id;
+            document.getElementById('alertIP').textContent = ip;
+            document.getElementById('alertUser').textContent = user;
+            document.getElementById('alertAttempts').textContent = attempts;
+            document.getElementById('alertTimestamp').textContent = timestamp;
+
+            const severityBadge = document.getElementById('alertSeverity');
+            severityBadge.textContent = severity;
+            severityBadge.className = 'badge ' +
+                (severity === 'HIGH' ? 'bg-danger' :
+                 severity === 'MEDIUM' ? 'bg-warning text-dark' : 'bg-success');
+
+            const modal = new bootstrap.Modal(document.getElementById('alertModal'));
+            modal.show();
+        }
+
+        // Alert action functions
+        function blockIP() {
+            showNotification('IP BLOCKED - Firewall rule added', 'success');
+        }
+
+        function investigateAlert() {
+            showNotification('INVESTIGATION INITIATED', 'info');
+        }
+
+        function createIncident() {
+            showNotification('INCIDENT CREATED', 'warning');
+        }
+
+        function escalateAlert() {
+            showNotification('ALERT ESCALATED to Tier 2', 'danger');
+        }
+
+        function dismissAlert() {
+            showNotification('ALERT DISMISSED', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('alertModal')).hide();
+        }
+
+        // Export alerts
+        function exportAlerts() {
+            showNotification('EXPORTING ALERTS...', 'info');
+            // Implementation would go here
+            setTimeout(() => showNotification('EXPORT COMPLETE', 'success'), 1000);
+        }
+
+        // Refresh alerts
+        function refreshAlerts() {
+            showNotification('REFRESHING...', 'info');
+            location.reload();
+        }
+
+        // Toggle sidebar (for mobile)
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+
+        // Dark mode toggle (cyber theme is always dark)
+        function toggleDarkMode() {
+            showNotification('CYBER MODE ACTIVE', 'info');
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            // Silent refresh - could be improved with WebSocket
+        }, 30000);
+
+        // Notifications
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `cyber-notification alert alert-${type}`;
+            notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    <div>
+                        <strong>SYSTEM:</strong> ${message}
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Matrix rain effect (simplified)
+        function createMatrixRain() {
+            const canvas = document.createElement('canvas');
+            canvas.style.position = 'fixed';
+            canvas.style.top = '0';
+            canvas.style.left = '0';
+            canvas.style.zIndex = '-2';
+            canvas.style.opacity = '0.05';
+            document.body.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const matrix = "01";
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+
+            for (let x = 0; x < columns; x++) {
+                drops[x] = 1;
+            }
+
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#00ff41';
+                ctx.font = fontSize + 'px JetBrains Mono';
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrix[Math.floor(Math.random() * matrix.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+
+            setInterval(draw, 35);
+        }
+
+        // Initialize effects
+        createMatrixRain();
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshAlerts();
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                        break;
+                }
+            }
+        });
+
+        // Theme switching functionality
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.theme-option').forEach(opt => opt.classList.remove('active'));
+                this.classList.add('active');
+
+                const theme = this.getAttribute('data-theme');
+                showNotification(`THEME CHANGED TO ${theme.toUpperCase()}`, 'info');
+            });
+        });
+
+        // Slider value updates
+        document.querySelectorAll('.cyber-slider').forEach(slider => {
+            const valueDisplay = slider.parentElement.querySelector('.threshold-value');
+
+            slider.addEventListener('input', function() {
+                const value = this.value;
+                const label = this.parentElement.parentElement.querySelector('.threshold-label').textContent;
+
+                if (label.includes('CPU') || label.includes('Memory') || label.includes('Failed Login')) {
+                    valueDisplay.textContent = value + '%';
+                } else if (label.includes('Response Time')) {
+                    valueDisplay.textContent = value + ' seconds';
+                } else if (label.includes('Failed Login Attempts')) {
+                    valueDisplay.textContent = value + ' attempts';
+                }
+            });
+        });
+
+        // Switch toggle effects
+        document.querySelectorAll('.cyber-switch input').forEach(switchInput => {
+            switchInput.addEventListener('change', function() {
+                const label = this.parentElement.parentElement.querySelector('.setting-label').textContent;
+                const status = this.checked ? 'ENABLED' : 'DISABLED';
+                showNotification(`${label.toUpperCase()} ${status}`, 'info');
+            });
+        });
+
+        // Initialize additional charts for new sections
+        // Response Time Chart
+        const responseChartData = {
+            labels: ['Detection', 'Analysis', 'Response', 'Resolution'],
+            datasets: [{
+                label: 'Average Time (seconds)',
+                data: [2.3, 15.7, 45.2, 144.8],
+                backgroundColor: 'rgba(0, 255, 65, 0.2)',
+                borderColor: '#00ff41',
+                borderWidth: 2,
+                fill: true
+            }]
+        };
+
+        const responseChart = new Chart(document.getElementById('responseChart'), {
+            type: 'line',
+            data: responseChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#333333' },
+                        ticks: { color: '#ffffff' }
+                    },
+                    x: {
+                        grid: { color: '#333333' },
+                        ticks: { color: '#ffffff' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        // Incident Chart
+        const incidentChartData = {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Incidents',
+                data: [3, 5, 2, 8, 4, 1, 6],
+                backgroundColor: '#ff073a',
+                borderColor: '#ff073a',
+                borderWidth: 1
+            }]
+        };
+
+        const incidentChart = new Chart(document.getElementById('incidentChart'), {
+            type: 'bar',
+            data: incidentChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#333333' },
+                        ticks: { color: '#ffffff' }
+                    },
+                    x: {
+                        grid: { color: '#333333' },
+                        ticks: { color: '#ffffff' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        // Network Chart
+        const networkChartData = {
+            labels: ['Firewall', 'IDS/IPS', 'VPN', 'Load Balancer'],
+            datasets: [{
+                label: 'Status',
+                data: [98, 95, 85, 92],
+                backgroundColor: ['#00ff41', '#00ff41', '#ffaa00', '#00ff41'],
+                borderColor: ['#00ff41', '#00ff41', '#ffaa00', '#00ff41'],
+                borderWidth: 2
+            }]
+        };
+
+        const networkChart = new Chart(document.getElementById('networkChart'), {
+            type: 'radar',
+            data: networkChartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        grid: { color: '#333333' },
+                        ticks: { color: '#ffffff' },
+                        pointLabels: { color: '#ffffff' }
+                    }
+                },
+                plugins: {
+                    legend: { labels: { color: '#ffffff' } }
+                }
+            }
+        });
+
+        // Add click handlers for incident actions
+        document.querySelectorAll('.incident-actions .btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.textContent.trim().toLowerCase();
+                const incidentTitle = this.closest('.incident-item').querySelector('.incident-title').textContent;
+                showNotification(`${action.toUpperCase()}: ${incidentTitle}`, 'info');
+            });
+        });
+
+        // Add hover effects for interactive elements
+        document.querySelectorAll('.threat-item, .incident-item, .service-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+            });
+
+            item.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Enhanced system health monitoring
+        async function refreshSystemHealth() {
+            try {
+                const response = await fetch('/api/detailed-system-health');
+                const data = await response.json();
+
+                if (data.error) {
+                    showNotification('System health monitoring unavailable', 'warning');
+                    return;
+                }
+
+                // Update CPU
+                document.getElementById('cpuProgress').style.width = data.cpu.percent + '%';
+                document.getElementById('cpuValue').textContent = data.cpu.percent + '%';
+
+                // Update Memory
+                document.getElementById('memoryProgress').style.width = data.memory.percent + '%';
+                document.getElementById('memoryValue').textContent = data.memory.percent + '%';
+
+                // Update Disk
+                document.getElementById('diskProgress').style.width = data.disk.percent + '%';
+                document.getElementById('diskValue').textContent = data.disk.percent + '%';
+
+                // Update Network
+                document.getElementById('networkProgress').style.width = (data.network.connections / 2) + '%';
+                document.getElementById('networkValue').textContent = data.network.connections;
+
+                // Update network stats
+                document.getElementById('networkConnections').textContent = data.network.connections;
+                document.getElementById('dataSent').textContent = data.network.bytes_sent_mb + ' MB';
+                document.getElementById('dataReceived').textContent = data.network.bytes_recv_mb + ' MB';
+
+                // Update health score
+                document.getElementById('healthScore').textContent = data.health_score;
+
+                showNotification('System health updated', 'success');
+            } catch (error) {
+                showNotification('Failed to refresh system health', 'danger');
+            }
+        }
+
+        // Manual alert function
+        async function sendManualAlert() {
+            const alertType = prompt('Enter alert type:', 'manual');
+            const message = prompt('Enter alert message:', 'Manual security alert triggered');
+
+            if (!alertType || !message) return;
+
+            try {
+                const response = await fetch('/api/send-alert', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: alertType, message: message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showNotification('Alert sent successfully', 'success');
+                } else {
+                    showNotification('Failed to send alert', 'danger');
+                }
+            } catch (error) {
+                showNotification('Error sending alert', 'danger');
+            }
+        }
+
+        // Log file management functions
+        let currentLogFile = null;
+
+        // File upload handling
+        document.getElementById('logFileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('uploadZone').addEventListener('click', () => {
+            document.getElementById('logFileInput').click();
+        });
+
+        // Drag and drop functionality
+        document.getElementById('uploadZone').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        });
+
+        document.getElementById('uploadZone').addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        });
+
+        document.getElementById('uploadZone').addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('logfile', file);
+
+            // Show progress
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            progressDiv.style.display = 'block';
+            progressText.textContent = 'Uploading...';
+
+            try {
+                const response = await fetch('/api/upload-log', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    progressText.textContent = 'Upload complete! Analyzing...';
+                    progressBar.style.width = '100%';
+
+                    // Show analysis results
+                    displayAnalysisResults(data.analysis);
+                    document.getElementById('securityScore').textContent = data.analysis.security_score;
+
+                    // Refresh logs list
+                    setTimeout(() => {
+                        refreshLogs();
+                        progressDiv.style.display = 'none';
+                        progressBar.style.width = '0%';
+                        showNotification(`Log file "${data.filename}" uploaded and analyzed`, 'success');
+                    }, 1000);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                progressText.textContent = 'Upload failed';
+                progressBar.style.backgroundColor = 'var(--cyber-danger)';
+                showNotification(`Upload failed: ${error.message}`, 'danger');
+
+                setTimeout(() => {
+                    progressDiv.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    progressBar.style.backgroundColor = '';
+                }, 3000);
+            }
+        }
+
+        async function refreshLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+
+                const logsList = document.getElementById('logsList');
+                logsList.innerHTML = '';
+
+                if (data.logs.length === 0) {
+                    logsList.innerHTML = `
+                        <div class="log-item">
+                            <div class="log-info">
+                                <i class="fas fa-file-alt log-icon"></i>
+                                <div class="log-details">
+                                    <div class="log-name">No logs uploaded yet</div>
+                                    <div class="log-meta">Upload some log files to get started</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                data.logs.forEach(log => {
+                    const logItem = document.createElement('div');
+                    logItem.className = 'log-item';
+                    logItem.innerHTML = `
+                        <div class="log-info">
+                            <i class="fas fa-file-alt log-icon"></i>
+                            <div class="log-details">
+                                <div class="log-name">${log.filename}</div>
+                                <div class="log-meta">${(log.size / 1024).toFixed(1)} KB • ${log.modified}</div>
+                            </div>
+                        </div>
+                        <div class="log-actions">
+                            <button class="btn btn-sm btn-outline-info" onclick="analyzeLog('${log.filename}')">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="downloadLog('${log.filename}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteLog('${log.filename}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    logsList.appendChild(logItem);
+                });
+            } catch (error) {
+                showNotification('Failed to refresh logs list', 'danger');
+            }
+        }
+
+        async function analyzeLog(filename) {
+            try {
+                const response = await fetch(`/api/analyze-log/${filename}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    displayAnalysisResults(data.analysis);
+                    document.getElementById('securityScore').textContent = data.analysis.security_score;
+                    showNotification(`Analysis complete for ${filename}`, 'success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                showNotification(`Analysis failed: ${error.message}`, 'danger');
+            }
+        }
+
+        async function downloadLog(filename) {
+            try {
+                const response = await fetch(`/api/download-log/${filename}`);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                showNotification(`Downloaded ${filename}`, 'success');
+            } catch (error) {
+                showNotification('Download failed', 'danger');
+            }
+        }
+
+        async function deleteLog(filename) {
+            if (!confirm(`Are you sure you want to delete "${filename}"?`)) return;
+
+            try {
+                const response = await fetch(`/api/delete-log/${filename}`, { method: 'DELETE' });
+                const data = await response.json();
+
+                if (data.success) {
+                    refreshLogs();
+                    showNotification(`Deleted ${filename}`, 'success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                showNotification(`Delete failed: ${error.message}`, 'danger');
+            }
+        }
+
+        function displayAnalysisResults(analysis) {
+            const resultsDiv = document.getElementById('analysisResults');
+            resultsDiv.innerHTML = '';
+
+            const analysisItems = [
+                { title: 'Failed Logins', value: analysis.failed_logins, class: analysis.failed_logins > 10 ? 'analysis-critical' : 'analysis-good' },
+                { title: 'Brute Force Attempts', value: analysis.brute_force_attempts, class: analysis.brute_force_attempts > 0 ? 'analysis-critical' : 'analysis-good' },
+                { title: 'Suspicious IPs', value: analysis.suspicious_ips.length, class: analysis.suspicious_ips.length > 3 ? 'analysis-warning' : 'analysis-good' },
+                { title: 'Security Score', value: analysis.security_score + '/100', class: analysis.security_score >= 70 ? 'analysis-good' : analysis.security_score >= 50 ? 'analysis-warning' : 'analysis-critical' }
+            ];
+
+            analysisItems.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'analysis-item';
+                itemDiv.innerHTML = `
+                    <div class="analysis-title">${item.title}</div>
+                    <div class="analysis-value ${item.class}">${item.value}</div>
+                `;
+                resultsDiv.appendChild(itemDiv);
+            });
+
+            // Add recommendations if any
+            if (analysis.recommendations.length > 0) {
+                const recDiv = document.createElement('div');
+                recDiv.className = 'analysis-item';
+                recDiv.innerHTML = `
+                    <div class="analysis-title">Recommendations</div>
+                    <ul style="color: var(--cyber-text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">
+                        ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                `;
+                resultsDiv.appendChild(recDiv);
+            }
+        }
+
+        // Check for alerts periodically
+        setInterval(async () => {
+            try {
+                await fetch('/api/check-alerts');
+            } catch (error) {
+                // Silent fail for background checks
+            }
+        }, 30000); // Check every 30 seconds
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshSystemHealth();
+            refreshLogs();
+        });
+    </script>
+</body>
+</html>

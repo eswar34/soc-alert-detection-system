@@ -1,58 +1,391 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SOC Alert Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 SOC Alert Detection Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         body {
-            font-family: Arial;
-            background: #f4f6f8;
-            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        h2 {
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: transform 0.3s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card {
             text-align: center;
+            padding: 20px;
         }
-        table {
-            width: 90%;
-            margin: auto;
-            border-collapse: collapse;
-            background: white;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
-        th, td {
-            padding: 12px;
-            border-bottom: 1px solid #ccc;
-            text-align: center;
+        .high { color: #dc3545; }
+        .medium { color: #fd7e14; }
+        .low { color: #28a745; }
+        .table-responsive {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            overflow: hidden;
         }
-        th {
-            background: #1f2933;
-            color: white;
+        .alert-high { background-color: rgba(220, 53, 69, 0.1); }
+        .alert-medium { background-color: rgba(253, 126, 20, 0.1); }
+        .alert-low { background-color: rgba(40, 167, 69, 0.1); }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
         }
-        .HIGH { color: red; font-weight: bold; }
-        .MEDIUM { color: orange; font-weight: bold; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .dark-mode {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+        }
+        .dark-mode .dashboard-card {
+            background: rgba(44, 62, 80, 0.95);
+            color: #ecf0f1;
+        }
+        .dark-mode .navbar {
+            background: #2c3e50 !important;
+        }
+        .dark-mode .search-container {
+            background: rgba(44, 62, 80, 0.95);
+        }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>
+                SOC Alert Detection System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="runDetector()"><i class="fas fa-search me-1"></i>Run Detection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="toggleDarkMode()"><i class="fas fa-moon me-1"></i>Dark Mode</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="refreshData()"><i class="fas fa-sync me-1"></i>Refresh</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<h2>🚨 SOC Alert Detection Dashboard</h2>
+    <div class="container">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card stat-card">
+                    <div class="stat-number">{{ stats.total }}</div>
+                    <h5><i class="fas fa-exclamation-triangle text-warning me-2"></i>Total Alerts</h5>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card stat-card">
+                    <div class="stat-number high">{{ stats.high }}</div>
+                    <h5><i class="fas fa-skull-crossbones text-danger me-2"></i>High Severity</h5>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card stat-card">
+                    <div class="stat-number medium">{{ stats.medium }}</div>
+                    <h5><i class="fas fa-exclamation-circle text-warning me-2"></i>Medium Severity</h5>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="dashboard-card stat-card">
+                    <div class="stat-number low">{{ stats.low }}</div>
+                    <h5><i class="fas fa-info-circle text-success me-2"></i>Low Severity</h5>
+                </div>
+            </div>
+        </div>
 
-<table>
-    <tr>
-        <th>IP Address</th>
-        <th>User</th>
-        <th>Attempts</th>
-        <th>Severity</th>
-        <th>Action</th>
-    </tr>
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="dashboard-card p-3">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Alert Severity Distribution</h5>
+                    <div class="chart-container">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="dashboard-card p-3">
+                    <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Recent Activity</h5>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    {% for a in alerts %}
-    <tr>
-        <td>{{ a[0] }}</td>
-        <td>{{ a[1] }}</td>
-        <td>{{ a[2] }}</td>
-        <td class="{{ a[3] }}">{{ a[3] }}</td>
-        <td>{{ a[4] }}</td>
-    </tr>
-    {% endfor %}
-</table>
+        <!-- Search and Filter -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search alerts...">
+                </div>
+                <div class="col-md-3">
+                    <select id="severityFilter" class="form-select">
+                        <option value="">All Severities</option>
+                        <option value="HIGH">High</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="LOW">Low</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="actionFilter" class="form-select">
+                        <option value="">All Actions</option>
+                        <option value="BLOCK IP">Block IP</option>
+                        <option value="MONITOR">Monitor</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-primary w-100" onclick="filterAlerts()">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </div>
+        </div>
 
+        <!-- Alerts Table -->
+        <div class="dashboard-card table-responsive">
+            <table class="table table-hover mb-0" id="alertsTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="fas fa-globe me-1"></i>IP Address</th>
+                        <th><i class="fas fa-user me-1"></i>User</th>
+                        <th><i class="fas fa-keyboard me-1"></i>Attempts</th>
+                        <th><i class="fas fa-exclamation-triangle me-1"></i>Severity</th>
+                        <th><i class="fas fa-cogs me-1"></i>Action</th>
+                        <th><i class="fas fa-clock me-1"></i>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr class="alert-{{ alert[3].lower() }}">
+                        <td><code>{{ alert[0] }}</code></td>
+                        <td>{{ alert[1] }}</td>
+                        <td><span class="badge bg-secondary">{{ alert[2] }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if alert[3] == 'HIGH' else 'warning' if alert[3] == 'MEDIUM' else 'success' }}">
+                                {{ alert[3] }}
+                            </span>
+                        </td>
+                        <td>{{ alert[4] }}</td>
+                        <td>{{ alert[5] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Initialize charts
+        const severityData = {
+            labels: ['High', 'Medium', 'Low'],
+            datasets: [{
+                data: [{{ stats.high }}, {{ stats.medium }}, {{ stats.low }}],
+                backgroundColor: ['#dc3545', '#fd7e14', '#28a745'],
+                borderWidth: 1
+            }]
+        };
+
+        const severityChart = new Chart(document.getElementById('severityChart'), {
+            type: 'doughnut',
+            data: severityData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Activity chart (simplified)
+        const activityData = {
+            labels: ['Last 24h', 'Last 7d', 'Last 30d'],
+            datasets: [{
+                label: 'Alerts',
+                data: [{{ stats.total }}, {{ stats.total }}, {{ stats.total }}],
+                backgroundColor: '#667eea',
+                borderColor: '#764ba2',
+                borderWidth: 1
+            }]
+        };
+
+        const activityChart = new Chart(document.getElementById('activityChart'), {
+            type: 'bar',
+            data: activityData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Filter functionality
+        function filterAlerts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const severityFilter = document.getElementById('severityFilter').value;
+            const actionFilter = document.getElementById('actionFilter').value;
+            const rows = document.querySelectorAll('#alertsTable tbody tr');
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                const ip = cells[0].textContent.toLowerCase();
+                const user = cells[1].textContent.toLowerCase();
+                const severity = cells[3].textContent.trim();
+                const action = cells[4].textContent.trim();
+
+                const matchesSearch = ip.includes(searchTerm) || user.includes(searchTerm);
+                const matchesSeverity = !severityFilter || severity === severityFilter;
+                const matchesAction = !actionFilter || action === actionFilter;
+
+                row.style.display = matchesSearch && matchesSeverity && matchesAction ? '' : 'none';
+            });
+        }
+
+        // Refresh data function
+        function refreshData() {
+            location.reload();
+        }
+
+        // Run detector function
+        function runDetector() {
+            fetch('/run_detector')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('Detection completed successfully!', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification('Detection failed: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Error running detection', 'danger');
+                });
+        }
+
+        // Dark mode toggle
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+            showNotification(isDark ? 'Dark mode enabled' : 'Light mode enabled', 'info');
+        }
+
+        // Load dark mode preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.add('dark-mode');
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshData, 30000);
+
+        // Socket.IO for real-time updates
+        const socket = io();
+
+        socket.on('connect', function() {
+            console.log('Connected to server');
+        });
+
+        socket.on('initial_data', function(data) {
+            updateDashboard(data);
+        });
+
+        socket.on('data_update', function(data) {
+            updateDashboard(data);
+            showNotification('New alerts detected!', 'info');
+        });
+
+        function updateDashboard(data) {
+            // Update stats cards
+            document.querySelector('.stat-number').textContent = data.stats.total;
+            document.querySelectorAll('.stat-number')[1].textContent = data.stats.high;
+            document.querySelectorAll('.stat-number')[2].textContent = data.stats.medium;
+            document.querySelectorAll('.stat-number')[3].textContent = data.stats.low;
+
+            // Update charts
+            severityChart.data.datasets[0].data = [data.stats.high, data.stats.medium, data.stats.low];
+            severityChart.update();
+
+            // Update table
+            const tbody = document.querySelector('#alertsTable tbody');
+            tbody.innerHTML = '';
+            data.alerts.forEach(alert => {
+                const row = `
+                    <tr class="alert-${alert[3].toLowerCase()}">
+                        <td><code>${alert[0]}</code></td>
+                        <td>${alert[1]}</td>
+                        <td><span class="badge bg-secondary">${alert[2]}</span></td>
+                        <td>
+                            <span class="badge bg-${alert[3] === 'HIGH' ? 'danger' : alert[3] === 'MEDIUM' ? 'warning' : 'success'}">
+                                ${alert[3]}
+                            </span>
+                        </td>
+                        <td>${alert[4]}</td>
+                        <td>${alert[5]}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function showNotification(message, type) {
+            // Simple notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                <i class="fas fa-bell me-2"></i>${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+    </script>
 </body>
 </html>

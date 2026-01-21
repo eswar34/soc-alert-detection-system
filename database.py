@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 conn = sqlite3.connect("soc_alerts.db")
 cur = conn.cursor()
@@ -10,7 +11,8 @@ CREATE TABLE IF NOT EXISTS alerts (
     username TEXT,
     attempts INTEGER,
     severity TEXT,
-    action TEXT
+    action TEXT,
+    timestamp TEXT DEFAULT (datetime('now'))
 )
 """)
 
