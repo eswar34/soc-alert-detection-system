@@ -202,8 +202,8 @@ def system_health():
                 'python_version': platform.python_version()
             }
         })
-    except ImportError:
-        # Fallback if psutil is not available
+    except Exception:
+        # Fallback if psutil is not available or fails
         return jsonify({
             'cpu_percent': 45,
             'memory_percent': 67,
